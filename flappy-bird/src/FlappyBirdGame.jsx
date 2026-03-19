@@ -34,11 +34,13 @@ const FlappyBirdGame = () => {
   const [birdY, setBirdY] = useState(BIRD_START_Y);
   const [birdVelocity, setBirdVelocity] = useState(0);
   const [pipes, setPipes] = useState([]);
+  const [score, setScore] = useState(0);
   const [flapping, setFlapping] = useState(false);
 
   const birdYRef = useRef(BIRD_START_Y);
   const birdVelRef = useRef(0);
   const pipesRef = useRef([]);
+  const scoreRef = useRef(0);
   const frameRef = useRef(0);
   const rafRef = useRef();
   const gameStateRef = useRef('idle');
@@ -68,8 +70,16 @@ const FlappyBirdGame = () => {
         .map(p => ({ ...p, x: p.x - PIPE_SPEED }))
         .filter(p => p.x + PIPE_WIDTH > 0);
 
+      // Score: count each pipe once when it passes behind the bird
+      for (const pipe of pipesRef.current) {
+        if (!pipe.passed && pipe.x + PIPE_WIDTH < BIRD_X) {
+          pipe.passed = true;
+          scoreRef.current += 1;
+        }
+      }
+
       if (frameRef.current % PIPE_INTERVAL === 0) {
-        pipesRef.current.push({ x: GAME_WIDTH, gapY: getRandomPipeY() });
+        pipesRef.current.push({ x: GAME_WIDTH, gapY: getRandomPipeY(), passed: false });
       }
 
       // Collision detection
@@ -96,6 +106,7 @@ const FlappyBirdGame = () => {
       setBirdY(birdYRef.current);
       setBirdVelocity(birdVelRef.current);
       setPipes([...pipesRef.current]);
+      setScore(scoreRef.current);
 
       if (collided) {
         setGameState('gameover');
@@ -115,10 +126,12 @@ const FlappyBirdGame = () => {
       birdYRef.current = BIRD_START_Y;
       birdVelRef.current = FLAP_STRENGTH;
       pipesRef.current = [];
+      scoreRef.current = 0;
       frameRef.current = 0;
       setBirdY(BIRD_START_Y);
       setBirdVelocity(FLAP_STRENGTH);
       setPipes([]);
+      setScore(0);
       setGameState('playing');
     } else if (gameStateRef.current === 'playing') {
       birdVelRef.current = FLAP_STRENGTH;
@@ -169,6 +182,10 @@ const FlappyBirdGame = () => {
         }}
       />
       {/* Bird */}
+      {/* Score */}
+      <div style={{ position: 'absolute', left: 12, top: 12, zIndex: 5, color: '#fff', fontWeight: 'bold', fontSize: 28, textShadow: '2px 2px 8px #0007' }}>
+        {score}
+      </div>
       <div
         style={{
           position: 'absolute',
@@ -213,9 +230,11 @@ const FlappyBirdGame = () => {
               birdVelRef.current = 0;
               pipesRef.current = [];
               frameRef.current = 0;
-              setBirdY(BIRD_START_Y);
+                  setBirdY(BIRD_START_Y);
               setBirdVelocity(0);
               setPipes([]);
+              setScore(0);
+              scoreRef.current = 0;
               setGameState('idle');
             }}
           >
