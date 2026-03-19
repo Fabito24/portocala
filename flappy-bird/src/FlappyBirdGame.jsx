@@ -28,7 +28,7 @@ function checkCollision(birdRect, rect) {
   );
 }
 
-const GameInstance = ({ label, controlKey, colorStyle, startVersion, onRequestStart, onDie, alive }) => {
+const GameInstance = ({ label, controlKey, colorStyle, startVersion, onRequestStart, onDie, alive, canRestart }) => {
   const [status, setStatus] = useState('idle');
   const [birdY, setBirdY] = useState(BIRD_START_Y);
   const [birdVelocity, setBirdVelocity] = useState(0);
@@ -68,8 +68,8 @@ const GameInstance = ({ label, controlKey, colorStyle, startVersion, onRequestSt
   }, [startVersion, alive, reset]);
 
   const handleFlap = useCallback(() => {
-    if (!alive) return;
-    if (status === 'idle') {
+    if (!alive && !canRestart) return;
+    if (status === 'idle' || canRestart) {
       onRequestStart();
       return;
     }
@@ -78,7 +78,7 @@ const GameInstance = ({ label, controlKey, colorStyle, startVersion, onRequestSt
       setFlapping(true);
       setTimeout(() => setFlapping(false), 90);
     }
-  }, [alive, onRequestStart, status]);
+  }, [alive, canRestart, onRequestStart, status]);
 
   useEffect(() => {
     if (status !== 'playing') return;
@@ -209,11 +209,11 @@ const FlappyBirdGame = () => {
         <div style={{ marginTop: 6, color: '#e6f7ff' }}>Player 1: Space | Player 2: Up Arrow</div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, justifyItems: 'center' }}>
-        <GameInstance label="Player 1" controlKey="Space" colorStyle="radial-gradient(circle at 60% 40%, #ffe066 70%, #e1a800 100%)" startVersion={startVersion} onRequestStart={requestStart} onDie={handleDeath} alive={p1Alive} />
-        <GameInstance label="Player 2" controlKey="ArrowUp" colorStyle="radial-gradient(circle at 40% 30%, #6ec8ff 70%, #3a7bd5 100%)" startVersion={startVersion} onRequestStart={requestStart} onDie={handleDeath} alive={p2Alive} />
+        <GameInstance label="Player 1" controlKey="Space" colorStyle="radial-gradient(circle at 60% 40%, #ffe066 70%, #e1a800 100%)" startVersion={startVersion} onRequestStart={requestStart} onDie={handleDeath} alive={p1Alive} canRestart={!p1Alive && !p2Alive} />
+        <GameInstance label="Player 2" controlKey="ArrowUp" colorStyle="radial-gradient(circle at 40% 30%, #6ec8ff 70%, #3a7bd5 100%)" startVersion={startVersion} onRequestStart={requestStart} onDie={handleDeath} alive={p2Alive} canRestart={!p1Alive && !p2Alive} />
       </div>
       <div style={{ marginTop: 14, textAlign: 'center', fontWeight: 700 }}>
-        {!alive.p1 && !alive.p2 ? 'Both players dead. Click any panel to restart.' : alive.p1 && alive.p2 ? 'Both players ready. Press a key to start.' : alive.p1 ? 'Player 1 still alive.' : 'Player 2 still alive.'}
+        {!alive.p1 && !alive.p2 ? 'Both players dead. Press Space or Up Arrow to restart.' : alive.p1 && alive.p2 ? 'Both players ready. Press a key to start.' : alive.p1 ? 'Player 1 still alive.' : 'Player 2 still alive.'}
       </div>
     </div>
   );
